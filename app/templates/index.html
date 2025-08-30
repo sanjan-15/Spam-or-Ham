@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced Spam Detector</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap');
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: #f0f2f5;
+            color: #333;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+        }
+        .main-container {
+            width: 100%;
+            max-width: 800px;
+        }
+        .card {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+        h1 {
+            color: #1c1e21;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .upload-form p {
+            text-align: center;
+            color: #606770;
+        }
+        .file-input-wrapper {
+            position: relative;
+            text-align: center;
+            margin: 20px 0;
+            padding: 30px;
+            border: 2px dashed #ccd0d5;
+            border-radius: 8px;
+            background-color: #f7f8fa;
+        }
+        input[type="file"] {
+            opacity: 0;
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            cursor: pointer;
+        }
+        .file-input-label {
+            color: #5c67f2;
+            font-weight: 500;
+        }
+        input[type="submit"] {
+            display: block;
+            width: 100%;
+            background-color: #5c67f2;
+            color: white;
+            padding: 12px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 700;
+            transition: background-color 0.2s;
+        }
+        input[type="submit"]:hover {
+            background-color: #4a54d2;
+        }
+        .results-container h2 {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .results-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        .results-table th, .results-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        .results-table th {
+            background-color: #f8f9fa;
+        }
+        .spam { color: #d9534f; font-weight: 700; }
+        .ham { color: #5cb85c; font-weight: 700; }
+        .chart-container {
+            width: 100%;
+            max-width: 400px;
+            margin: 20px auto;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="main-container">
+        <div class="card upload-form">
+            <h1>🛡️ Advanced Spam Detector</h1>
+            <p>Upload one or more PDF emails for batch classification.</p>
+            <form action="/" method="post" enctype="multipart/form-data">
+                <div class="file-input-wrapper">
+                    <label for="file-upload" class="file-input-label">Click to select files or drag and drop</label>
+                    <input type="file" name="pdf_files[]" accept=".pdf" required multiple>
+                </div>
+                <input type="submit" value="Analyze Emails">
+            </form>
+        </div>
+
+        {% if results %}
+        <div class="card results-container">
+            <h2>Classification Results</h2>
+            <table class="results-table">
+                <thead>
+                    <tr>
+                        <th>Filename</th>
+                        <th>Prediction</th>
+                        <th>Confidence</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for result in results %}
+                    <tr>
+                        <td>{{ result.filename }}</td>
+                        {% if result.error %}
+                            <td colspan="2" class="spam">{{ result.error }}</td>
+                        {% else %}
+                            <td><span class="{{ 'spam' if result.prediction == 'spam' else 'ham' }}">{{ result.prediction.upper() }}</span></td>
+                            <td>{{ result.confidence }}</td>
+                        {% endif %}
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+            {% if chart_data %}
+            <div class="chart-container">
+                <canvas id="resultsChart"></canvas>
+            </div>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+
+    {% if chart_data %}
+    <script>
+        const ctx = document.getElementById('resultsChart').getContext('2d');
+        const resultsChart = new Chart(ctx, {
+            type: 'pie', // Type of chart: pie, bar, line, etc.
+            data: {
+                labels: ['Spam', 'Ham'],
+                datasets: [{
+                    label: 'Email Classification',
+                    data: [{{ chart_data.spam }}, {{ chart_data.ham }}],
+                    backgroundColor: [
+                        'rgba(217, 83, 79, 0.7)', // Spam color
+                        'rgba(92, 184, 92, 0.7)'  // Ham color
+                    ],
+                    borderColor: [
+                        'rgba(217, 83, 79, 1)',
+                        'rgba(92, 184, 92, 1)'
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                    },
+                    title: {
+                        display: true,
+                        text: 'Batch Analysis Summary'
+                    }
+                }
+            }
+        });
+    </script>
+    {% endif %}
+
+</body>
+</html>
